@@ -1,0 +1,181 @@
+
+ 
+
+
+======================== Diffie-Hellman ========================
+
+def power(a, b, p):
+    return pow(a, b, p)
+
+P, G = 23, 5
+a, b = 4, 3
+
+print("P:", P)
+print("G:", G)
+print("Alice's private key:", a)
+print("Bob's private key:", b)
+
+x = power(G, a, P)
+y = power(G, b, P)
+
+ka = power(y, a, P)
+kb = power(x, b, P)
+
+print("Secret key for Alice:", ka)
+print("Secret key for Bob:", kb)
+---------------------------------------dynamic version---------------------
+
+def power(a, b, p):
+    return pow(a, b, p)
+
+# Input public values
+P = int(input("Enter prime number P: "))
+G = int(input("Enter primitive root G: "))
+
+# Input private keys
+a = int(input("Enter Alice's private key: "))
+b = int(input("Enter Bob's private key: "))
+
+print("\n--- Public Parameters ---")
+print("P:", P)
+print("G:", G)
+
+print("\n--- Private Keys ---")
+print("Alice's private key:", a)
+print("Bob's private key:", b)
+
+# Calculate public keys
+x = power(G, a, P)
+y = power(G, b, P)
+
+print("\n--- Public Keys ---")
+print("Alice's public key:", x)
+print("Bob's public key:", y)
+
+# Calculate shared secret keys
+ka = power(y, a, P)
+kb = power(x, b, P)
+
+print("\n--- Shared Secret Keys ---")
+print("Secret key for Alice:", ka)
+print("Secret key for Bob:", kb)
+
+if ka == kb:
+    print("\nKey Exchange Successful!")
+else:
+    print("\nKey Exchange Failed!")
+
+
+
+
+======================== SHA-256 ========================
+
+import hashlib
+
+text = input("Enter text: ")
+
+hash = hashlib.sha256(text.encode('utf-8')).hexdigest()
+
+print("SHA-256 Hash:", hash)
+
+
+
+
+======================== Blowfish ========================
+python -m pip install pycryptodome
+
+from Crypto.Cipher import Blowfish
+from Crypto.Util.Padding import pad, unpad
+import os
+
+# Generate a random key of 32 bytes
+key = os.urandom(32)  # Key length: 32 to 448 bits
+cipher = Blowfish.new(key, Blowfish.MODE_CBC)
+
+# Data to encrypt
+data = b"This is a secret message."
+
+# Pad the data to ensure it's a multiple of 8 bytes
+padded_data = pad(data, Blowfish.block_size)
+
+# Encrypt the data
+iv = cipher.iv  # Initialization vector
+encrypted_data = cipher.encrypt(padded_data)
+print("Encrypted:", encrypted_data)
+cipher_decrypt = Blowfish.new(key, Blowfish.MODE_CBC, iv)
+
+# Decrypt the data
+decrypted_data = unpad(cipher_decrypt.decrypt(encrypted_data), Blowfish.block_size)
+print("Decrypted:", decrypted_data)
+
+
+
+
+======================== Digital Signature Standard (DSS) ========================
+
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import dsa
+
+private_key = dsa.generate_private_key(key_size=2048)
+public_key = private_key.public_key()
+
+message = b"Secure document transmission data."
+signature = private_key.sign(message, hashes.SHA256())
+
+print("Signature generated. Length:", len(signature))
+
+try:
+    public_key.verify(signature, message, hashes.SHA256())
+    print("Verification SUCCESS: Signature is valid.")
+except Exception as e:
+    print("Verification FAILED:", e)
+
+
+
+
+======================== Secure Socket Layer (SSL) ========================
+openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365 -nodes
+
+First run server.py then client.py 
+
+Server.py-
+
+import socket, ssl
+
+s = socket.socket()
+s.bind(('127.0.0.1', 12345))
+s.listen(1)
+
+ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+ctx.load_cert_chain('cert.pem', 'key.pem')
+
+print("Server waiting for connection...")
+
+c, addr = s.accept()
+c = ctx.wrap_socket(c, server_side=True)
+
+msg = c.recv(1024).decode()
+print("Client:", msg)
+
+c.send(b"Hello Client! Secure message received.")
+
+c.close()
+s.close()
+
+
+Client.py-
+
+import socket, ssl
+
+ctx = ssl.create_default_context()
+ctx.check_hostname = False
+ctx.verify_mode = ssl.CERT_NONE
+
+s = socket.create_connection(('127.0.0.1', 12345))
+c = ctx.wrap_socket(s, server_hostname='localhost')
+
+c.send(b"Hello Server! This is a secure message.")
+
+print("Server:", c.recv(1024).decode())
+
+c.close()
